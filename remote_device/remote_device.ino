@@ -34,8 +34,8 @@ void setup(void)
   for (int i = 0; i < num_relay_pins; i++)
   {
     pinMode(relay_pins[i], OUTPUT);
-    digitalWrite(relay_pins[i], 1);
   }
+  Reset();
   radio.setPALevel(RF24_PA_LOW);
   radio.printDetails();
 }
@@ -56,7 +56,7 @@ void loop(void)
 
   if (timeout)
   {
-    txt = "Timeout. Reset. ";
+    Reset();
   }
   else
   {
@@ -82,20 +82,35 @@ void loop(void)
     radio.stopListening();
     bool ok = radio.write( &rpSend, sizeof(radioPack) );
     txt = txt + "Send back. ";
-    Serial.println(txt);
     radio.startListening();
 
     rpRecievePrev = rpRecieve;
+    Serial.println(txt);
   }
-
 }
 
+//----------------------------------------//
+void Reset()
+{
+  for (int i = 0; i < num_relay_pins; i++)
+  {
+    digitalWrite(relay_pins[i], 1);
+    rpSend.btn[i] = 0;
+  }
+  rpSend.count = 0;
+  Serial.println("Timeout. Reset. ");
+}
+
+
+//----------------------------------------//
 void setRel(int i)
 {
   digitalWrite(relay_pins[i], !rpRecieve.btn[i]);
   rpSend.btn[i] = rpRecieve.btn[i];
 }
 
+
+//----------------------------------------//
 void triggerRel(int i)
 {
   if (rpRecievePrev.btn[i] == 0 && rpRecieve.btn[i] == 1)
@@ -106,6 +121,7 @@ void triggerRel(int i)
   }
 }
 
+//----------------------------------------//
 void counter(int i, int x)
 {
   if (rpRecieve.btn[i] && 100 < rpRecieve.timePack - timeCounterLast )
