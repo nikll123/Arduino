@@ -23,6 +23,9 @@ const uint64_t pipes[2] = { 0x0808F0F0E1LL, 0x0808F0F0D2LL };
 const uint8_t button_pins[] = {2, 3, 4, 5, 6, 7};
 const uint8_t num_but_rel = sizeof(button_pins);
 const unsigned long timeout = 200000;  // mks
+bool logconnect[100];
+const uint8_t loglen = sizeof(logconnect);
+uint8_t logindex = 0;
 
 uint8_t countPrev = 0;
 
@@ -57,6 +60,10 @@ void setup()
 
   beep(200);
   lcd.clear();
+  for (int i = 0; i < loglen; i++)
+  {
+    logconnect[i] = 1;
+  }
 
   for (int i = 0; i < num_but_rel; i++)
   {
@@ -65,7 +72,7 @@ void setup()
     lcdRecieveUpd(i);
   }
   lcdCountUpdate(1);
-
+  lcdConnectQuality(1);
 }
 
 void loop(void)
@@ -102,15 +109,19 @@ void loop(void)
   }
   radio.stopListening();
 
+  logindex++;
+    if (logindex < loglen )
+  {}
+  else
+  {
+    logindex = 0;
+  }
+  
+  logconnect[logindex] = !timeout1;
+  lcdConnectQuality(0);
   if ( timeout1 )
   {
     Serial.println(F("Timeout. "));
-    for (int i = 0; i < num_but_rel; i++)
-    {
-      lcd.setCursor(i, 1);
-      //lcd.print("-");
-      //rpLcd.btn[i]=-1;
-    }
     beep(20);
   }
   else
@@ -124,20 +135,20 @@ void loop(void)
         lcdRecieveUpd(i);
       }
       lcdCountUpdate(0);
-      txt = "Good.";
+      //    txt = "Good.";
     }
     else
     {
       Serial.print(" ");
       Serial.print(rpRecieve.timePack);
       Serial.print(" ");
-      txt = "Bad. ";
+      //      txt = "Bad. ";
     }
     Serial.println();
   }
 
-  lcd.setCursor(10, 1);
-  lcd.print(txt);
+  //  lcd.setCursor(10, 1);
+  //  lcd.print(txt);
 
   delay(50);
 }
@@ -184,8 +195,24 @@ void lcdCountUpdate(bool forced)
     txt = txt.substring(txt.length() - 4);
     lcd.setCursor(11, 0);
     lcd.print(txt);
-
     countPrev = rpRecieve.count;
+  }
+}
+
+
+void lcdConnectQuality(bool forced)
+{
+  if (forced || logindex / 10 * 10 == logindex )
+  {
+    int sum = 0;
+    for ( int i = 0; i < loglen; i++ )
+    {
+      sum = sum + logconnect[i];
+    }
+    String txt = String(sum);
+    txt = "c:" + txt + "%";
+    lcd.setCursor(10, 1);
+    lcd.print(txt);
   }
 }
 
