@@ -17,7 +17,7 @@ const uint64_t pipes[2] = { 0x0808F0F0E1LL, 0x0808F0F0D2LL };
 const uint8_t relay_pins[] = { 2, 3, 4, 5, 6, 7 };
 const uint8_t num_relay_pins = sizeof(relay_pins);
 uint8_t relay_states[num_relay_pins];
-const unsigned long timeoutReset = 1000;
+const unsigned long timeoutReset = 1000;   // ms
 unsigned long timeCounterLast = 0;
 
 void setup(void)

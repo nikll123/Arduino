@@ -23,10 +23,7 @@ const uint64_t pipes[2] = { 0x0808F0F0E1LL, 0x0808F0F0D2LL };
 const uint8_t button_pins[] = {2, 3, 4, 5, 6, 7};
 const uint8_t num_but_rel = sizeof(button_pins);
 const unsigned long timeout = 200000;  // mks
-bool logconnect[100];
-const uint8_t loglen = sizeof(logconnect);
-uint8_t logindex = 0;
-
+uint8_t conPercent = 100;
 uint8_t countPrev = 0;
 
 void setup()
@@ -60,10 +57,6 @@ void setup()
 
   beep(200);
   lcd.clear();
-  for (int i = 0; i < loglen; i++)
-  {
-    logconnect[i] = 1;
-  }
 
   for (int i = 0; i < num_but_rel; i++)
   {
@@ -109,20 +102,11 @@ void loop(void)
   }
   radio.stopListening();
 
-  logindex++;
-    if (logindex < loglen )
-  {}
-  else
-  {
-    logindex = 0;
-  }
-  
-  logconnect[logindex] = !timeout1;
-  lcdConnectQuality(0);
+  lcdConnectQuality(!timeout1);
   if ( timeout1 )
   {
     Serial.println(F("Timeout. "));
-    beep(20);
+    beep(5);
   }
   else
   {
@@ -182,37 +166,37 @@ void lcdCountUpdate(bool forced)
 {
   if (forced || rpRecieve.count != countPrev)
   {
-    String txt = String(rpRecieve.count);
-    txt = "  ";
-    txt = txt + rpRecieve.count;
-    txt = txt.substring(txt.length() - 3);
+    String txt = int2str(rpRecieve.count);
     lcd.setCursor(7, 0);
     lcd.print(txt);
 
-    txt = "  ";
-    txt = txt + rpRecieve.count * 100 / 255;
-    txt = txt + "%";
-    txt = txt.substring(txt.length() - 4);
+    txt = int2str(rpRecieve.count * 100 / 255) + "%";
     lcd.setCursor(11, 0);
     lcd.print(txt);
     countPrev = rpRecieve.count;
   }
 }
 
-
-void lcdConnectQuality(bool forced)
+void lcdConnectQuality(bool c_good)
 {
-  if (forced || logindex / 10 * 10 == logindex )
+  if ((conPercent > 0 && !c_good) || (conPercent < 100 && c_good))
   {
-    int sum = 0;
-    for ( int i = 0; i < loglen; i++ )
-    {
-      sum = sum + logconnect[i];
-    }
-    String txt = String(sum);
-    txt = "c:" + txt + "%";
+    if (c_good)
+      conPercent++;
+    else
+      conPercent--;
+
+    String txt = "c:" + int2str(conPercent) + "%";
     lcd.setCursor(10, 1);
     lcd.print(txt);
   }
+}
+
+String int2str(int x)
+{
+  String str = "  ";
+  str += String(x);
+  str = str.substring(str.length() - 3);
+  return str;
 }
 
